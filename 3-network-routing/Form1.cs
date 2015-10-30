@@ -103,6 +103,8 @@ namespace NetworkRouting
                 }
             }
             pictureBox.Refresh();
+
+            PriorityQueue.TestPriorityQueue();
         }
 
         private Boolean startStopToggle = true;
