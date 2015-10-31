@@ -126,6 +126,22 @@ namespace NetworkRouting
             return true;
         }
 
+        // Returns the current value for a given id
+        public double GetVal(int id)
+        {
+            return heap[look_up[id]].value;
+        }
+
+        // Reduces the value for a given id to the specified value
+        public bool ReduceVal(int id, double new_val)
+        {
+            if (new_val >= heap[look_up[id]].value) { return false; }
+
+            heap[look_up[id]].value = new_val;
+            PercolateUp(look_up[id]);
+            return true;
+        }
+
         // Moves an element from index src to index dst in the heap, writing over whatever was there
         // Adjusts look_up with the new location
         // Returns the id of the item being moved
@@ -149,6 +165,7 @@ namespace NetworkRouting
             return nxt_idx == 0;
         }
 
+        // Returns a string representation of the heap
         override public String ToString()
         {
             if (IsEmpty()) { return "Queue is empty"; }
@@ -198,19 +215,48 @@ namespace NetworkRouting
             int size = 7;
             int range = 100;
             PriorityQueue q = new PriorityQueue(size);
+
+            Console.WriteLine("-----Test INSERT-----");
+
             for (int i = 0; i < size; i++)
             {
                 double val = r.NextDouble() * range;
                 if (!q.Insert(i, val))
                 {
-                    Console.WriteLine("ERROR on index " + i + " and value " + val.ToString("#.##"));
+                    Console.WriteLine("ERROR on index " + i + " with value " + val.ToString("#.##"));
                     return;
                 }
                 Console.WriteLine("inserted item " + i + " with value " + val.ToString("#.##"));
-                Console.WriteLine("queue:" + q.ToString());
+                Console.WriteLine("queue:\n" + q.ToString());
             }
 
             Console.WriteLine();
+            Console.WriteLine("-----Test REDUCE_VAL-----");
+
+            for (int i = 0; i < size; i++)
+            {
+                double val = r.NextDouble() * range;
+                if (q.ReduceVal(i, val))
+                {
+                    Console.WriteLine("update item " + i + " with value " + val.ToString("#.##"));
+                    Console.WriteLine("queue:\n" + q.ToString());
+                }
+                else {
+                    Console.WriteLine("ERROR updating index " + i + " with value " + val.ToString("#.##"));
+                }
+                
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("-----Test GET_VAL-----");
+
+            for (int i = 0; i < size; i++)
+            {
+                Console.WriteLine("Node " + i + " has a value of " + q.GetVal(i).ToString("#.##"));
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("-----Test POP_MIN-----");
 
             for (int i = 0; i < size; i++)
             {
