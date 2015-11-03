@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -160,14 +161,15 @@ namespace NetworkRouting
             return new PointF(left.X + ((right.X - left.X) / 2), top.Y + ((bottom.Y - top.Y) / 2));
         }
 
-        public void OnePathDijkstra()
+        public double OnePathDijkstra(Stopwatch s)
         {
-            Console.WriteLine("OnePathDijkstra");
             int n_nodes = points.Count();
             PriorityQueue q = new PriorityQueue(n_nodes);
             double[] src_dist = new double[n_nodes];
             int[] prev = new int[n_nodes];
             int i;
+
+            s.Start();
 
             for (i = 0; i < n_nodes; i++)
             {
@@ -189,7 +191,6 @@ namespace NetworkRouting
                 {
                     int temp_id = adj_nodes.ElementAt(i);
                     double temp_dist = src_dist[id] + GetDist(points[id], points[temp_id]);
-                    //Console.WriteLine("Distance from " + id + " to " + temp_id + " is " + temp_dist);
 
                     if (src_dist[temp_id] == double.MaxValue) // If the node has NOT been visited
                     {
@@ -199,9 +200,8 @@ namespace NetworkRouting
                         if (!q.Insert(temp_id, src_dist[temp_id]))
                         {
                             Console.WriteLine("ERROR inserting id " + temp_id + " connected to id " + id);
-                            return;
+                            return 1;
                         }
-                        //Console.WriteLine("queue:\n" + q.ToString());
                     }
                     else if (temp_dist < src_dist[temp_id]) // If the node HAS been visited and the temp distance is less than the previous distance
                     {
@@ -211,34 +211,87 @@ namespace NetworkRouting
                         if (!q.ReduceVal(temp_id, temp_dist))
                         {
                             Console.WriteLine("ERROR reducing id " + temp_id + " connected to id " + id);
-                            return;
+                            return 1;
+                        }
+                    }
+                }
+            }
+
+            s.Stop();
+
+            if (src_dist[dst] != double.MaxValue)
+            {
+                Pen pen = new Pen(Color.Black);
+                Font font = new Font("Arial", 8);
+                SolidBrush brush = new SolidBrush(Color.Black);
+                int temp = dst;
+                while (prev[temp] != -1)
+                {
+                    PointF p1 = points[temp];
+                    PointF p2 = points[prev[temp]];
+                    graphics.DrawLine(pen, p1, p2);
+                    graphics.DrawString(GetDist(p1, p2).ToString("#.##"), font, brush, GetMidPoint(p1, p2));
+                    temp = prev[temp];
+                }
+                pictureBox.Refresh();
+            }
+            else
+            {
+                Console.WriteLine("Destination is unreachable");
+            }
+
+            return src_dist[dst];
+        }
+
+        public double AllPathDijkstra(Stopwatch s)
+        {
+            int n_nodes = points.Count();
+            PriorityQueue q = new PriorityQueue(n_nodes);
+            double[] src_dist = new double[n_nodes];
+            int[] prev = new int[n_nodes];
+            int i;
+
+            s.Start();
+
+            for (i = 0; i < n_nodes; i++)
+            {
+                src_dist[i] = double.MaxValue;
+                prev[i] = -1;
+                q.Insert(i, src_dist[i]);
+            }
+
+            src_dist[src] = 0;
+            q.ReduceVal(src, src_dist[src]);
+
+            while (!q.IsEmpty())
+            {
+                int id = q.PopMin();
+                HashSet<int> adj_nodes = adjacencyList[id];
+                for (i = 0; i < adj_nodes.Count(); i++)
+                {
+                    int temp_id = adj_nodes.ElementAt(i);
+                    double temp_dist = src_dist[id] + GetDist(points[id], points[temp_id]);
+                    //Console.WriteLine("Distance from " + id + " to " + temp_id + " is " + temp_dist);
+
+                    
+                    if (temp_dist < src_dist[temp_id]) // If the node HAS been visited and the temp distance is less than the previous distance
+                    {
+                        src_dist[temp_id] = temp_dist;
+                        prev[temp_id] = id;
+
+                        if (!q.ReduceVal(temp_id, temp_dist))
+                        {
+                            Console.WriteLine("ERROR reducing id " + temp_id + " connected to id " + id);
+                            return 1;
                         }
                         //Console.WriteLine("queue:\n" + q.ToString());
                     }
                 }
             }
 
-            if (src_dist[dst] != double.MaxValue)
-            {
-                Pen pen = new Pen(Color.Red);
-                int temp = dst;
-                while (prev[temp] != -1)
-                {
-                    graphics.DrawLine(pen, points[temp], points[prev[temp]]);
-                    temp = prev[temp];
-                }
-                pictureBox.Refresh();
-                Console.WriteLine("Distance to destination is " + src_dist[dst]);
-            }
-            else
-            {
-                Console.WriteLine("Destination is unreachable");
-            }
-        }
+            s.Stop();
 
-        public void AllPathDijkstra()
-        {
-
+            return src_dist[dst];
         }
 
         // Use this to generate routing tables for every node
@@ -248,11 +301,28 @@ namespace NetworkRouting
             //TestDrawing();
             //TestDist();
 
-            OnePathDijkstra();
+            Stopwatch timer = new Stopwatch();
 
-            
+            double OnePathDist = OnePathDijkstra(timer);
+            double OneTime = timer.Elapsed.TotalSeconds;
 
-            //PriorityQueue.TestPriorityQueue();
+            double AllPathDist = AllPathDijkstra(timer);
+            double AllTime = timer.Elapsed.TotalSeconds;
+
+            this.oneTimeBox.Text = OneTime.ToString();
+            this.allTimeBox.Text = AllTime.ToString();
+            this.differenceBox.Text = ((1.0 - (OneTime / AllTime)) * 100).ToString();
+
+            if (OnePathDist != AllPathDist)
+            {
+                this.pathCostBox.Text = "ERROR";    
+                Console.WriteLine("ERROR: OnePath returned " + OnePathDist + " but AllPath returned " + AllPathDist);
+            }
+            else
+            {
+                this.pathCostBox.Text = (OnePathDist == double.MaxValue) ? "unreachable" : OnePathDist.ToString();
+            }
+
         }
 
         private void sourceNodeBox_LostFocus(object sender, EventArgs e)

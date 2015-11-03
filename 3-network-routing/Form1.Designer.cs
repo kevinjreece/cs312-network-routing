@@ -141,20 +141,22 @@
             this.sourceNodeBox.Size = new System.Drawing.Size(25, 20);
             this.sourceNodeBox.TabIndex = 11;
             this.sourceNodeBox.LostFocus += new System.EventHandler(this.sourceNodeBox_LostFocus);
+            this.sourceNodeBox.Width = 50;
             // 
             // targetNodeBox
             // 
             this.targetNodeBox.Enabled = true;
-            this.targetNodeBox.Location = new System.Drawing.Point(193, 343);
+            this.targetNodeBox.Location = new System.Drawing.Point(232, 343);
             this.targetNodeBox.Name = "targetNodeBox";
             this.targetNodeBox.Size = new System.Drawing.Size(25, 20);
             this.targetNodeBox.TabIndex = 13;
             this.targetNodeBox.LostFocus += new System.EventHandler(this.targetNodeBox_LostFocus);
+            this.targetNodeBox.Width = 50;
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(120, 350);
+            this.label4.Location = new System.Drawing.Point(159, 350);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(67, 13);
             this.label4.TabIndex = 12;
